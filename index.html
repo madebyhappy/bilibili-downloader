@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilibili Downloader · 一键下载 B 站视频和字幕</title>
+<meta name="description" content="选分辨率，自动下载视频+音频并在浏览器内合并成单个 MP4；视频若带字幕（含 AI 自动生成）还能导出 SRT。并行加速、可随时取消。个人自用的 Chrome 扩展。">
+<style>
+  :root {
+    --blue: #00a1d6;
+    --blue-dark: #0086b3;
+    --pink: #fb7299;
+    --ink: #18191c;
+    --muted: #61666d;
+    --line: #e3e5e7;
+    --bg: #f6f7f8;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  /* Hero */
+  header {
+    background: linear-gradient(160deg, #e9f7fc 0%, #f6f7f8 60%);
+    border-bottom: 1px solid var(--line);
+    padding: 64px 0 56px;
+    text-align: center;
+  }
+  .logo {
+    width: 96px; height: 96px; margin: 0 auto 20px;
+    filter: drop-shadow(0 10px 24px rgba(0,161,214,.4));
+  }
+  .logo svg { width: 96px; height: 96px; display: block; }
+  h1 { font-size: 40px; margin: 0 0 10px; letter-spacing: -.5px; }
+  .tagline { font-size: 18px; color: var(--muted); margin: 0 0 28px; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 600;
+    color: var(--blue-dark); background: #d5f0fa; border-radius: 999px;
+    padding: 3px 12px; margin-bottom: 24px; letter-spacing: .3px;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--blue); color: #fff; font-size: 17px; font-weight: 600;
+    padding: 15px 30px; border-radius: 12px; border: none; cursor: pointer;
+    box-shadow: 0 8px 22px rgba(0,161,214,.4);
+    transition: transform .12s, box-shadow .12s, background .12s;
+  }
+  .cta:hover { background: var(--blue-dark); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0,161,214,.5); }
+  .cta small { font-weight: 400; opacity: .85; font-size: 13px; }
+  .cta-sub { margin-top: 12px; font-size: 13px; color: var(--muted); }
+
+  /* Sections */
+  section { padding: 56px 0; }
+  section h2 { font-size: 26px; margin: 0 0 8px; text-align: center; }
+  section .lead { text-align: center; color: var(--muted); margin: 0 auto 36px; max-width: 640px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; transition: transform .12s, box-shadow .12s;
+  }
+  .feature:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+  .feature .ic { font-size: 26px; margin-bottom: 10px; }
+  .feature h3 { margin: 0 0 6px; font-size: 16px; }
+  .feature p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* Steps */
+  .steps { counter-reset: step; max-width: 680px; margin: 0 auto; }
+  .step {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--blue); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .step h3 { margin: 2px 0 4px; font-size: 16px; }
+  .step p { margin: 0; color: var(--muted); font-size: 14px; }
+  code {
+    background: #eef0f1; padding: 2px 7px; border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: #d63384;
+  }
+
+  /* Notes */
+  .notes { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 26px; max-width: 720px; margin: 0 auto; }
+  .notes details { border-bottom: 1px solid var(--line); padding: 14px 0; }
+  .notes details:last-child { border-bottom: none; }
+  .notes summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary::after { content: "+"; color: var(--blue); font-size: 20px; font-weight: 400; }
+  .notes details[open] summary::after { content: "–"; }
+  .notes p { color: var(--muted); font-size: 14px; margin: 10px 0 2px; }
+
+  .disclaimer {
+    background: #fff6f8; border: 1px solid #ffd9e3; border-radius: 12px;
+    padding: 16px 20px; max-width: 720px; margin: 0 auto; color: #a3364f; font-size: 14px;
+  }
+  .disclaimer b { color: var(--pink); }
+
+  footer { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+
+  /* Download-confirm modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal-box {
+    background: #fff; border-radius: 16px; padding: 26px 26px 20px;
+    max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal-box h3 { margin: 0 0 12px; font-size: 19px; }
+  .modal-box p { margin: 0 0 22px; font-size: 14px; color: var(--muted); line-height: 1.8; }
+  .modal-box p b { color: var(--pink); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-ghost {
+    background: #f0f1f2; color: var(--ink); border: none; border-radius: 12px;
+    padding: 14px 22px; font-size: 15px; cursor: pointer;
+  }
+  .btn-ghost:hover { background: #e6e7e9; }
+
+  @media (max-width: 720px) {
+    h1 { font-size: 30px; }
+    .grid { grid-template-columns: 1fr; }
+    section { padding: 40px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">
+      <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+        <rect width="96" height="96" rx="22" fill="#00a1d6"/>
+        <g stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M38 32 L28 17"/><path d="M58 32 L68 17"/>
+          <rect x="20" y="32" width="56" height="42" rx="10"/>
+          <path d="M48 43 V57"/><path d="M40 51 L48 59 L56 51"/>
+        </g>
+      </svg>
+    </div>
+    <div class="badge">v1.0.0 · 视频 + 字幕</div>
+    <h1>Bilibili Downloader</h1>
+    <p class="tagline">选个分辨率，一键把 B 站视频存成单个 MP4，带字幕还能导出 SRT</p>
+    <a class="cta" id="dl-btn" href="bilibili-downloader.zip" download>
+      ⬇ 下载扩展
+    </a>
+    <div class="cta-sub">Chrome / Edge · 开发者模式加载 · 无需安装 ffmpeg</div>
+  </div>
+</header>
+
+<section style="padding:26px 0 0;">
+  <div class="wrap">
+    <div class="disclaimer">
+      <b>仅供个人学习使用。</b> 请勿用于任何未经授权的下载、传播或商业用途，下载内容的版权归原作者与平台所有。使用本工具产生的一切后果由使用者自行承担。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>它能做什么</h2>
+    <p class="lead">在浏览器内完成全部工作——下载、合并、保存，不碰你磁盘上的其它文件，不需要命令行。</p>
+    <div class="grid">
+      <div class="feature"><div class="ic">🎬</div><h3>选清晰度 + 编码</h3><p>所有分辨率一目了然，H.264 / H.265 / AV1 三种编码方式可选。</p></div>
+      <div class="feature"><div class="ic">🧩</div><h3>自动合并 MP4</h3><p>视频流 + 音频流自动配对，内置 ffmpeg.wasm 在浏览器里合成单个 mp4。</p></div>
+      <div class="feature"><div class="ic">💬</div><h3>下载字幕</h3><p>视频若带字幕可一键导出标准 SRT，人工字幕和 AI 自动生成字幕都支持。</p></div>
+      <div class="feature"><div class="ic">⚡</div><h3>并行加速</h3><p>多连接分块下载，绕过 B 站单连接限速，速度贴近你的真实带宽。</p></div>
+      <div class="feature"><div class="ic">🔁</div><h3>断点续传</h3><p>某块卡了只重试那一块，已下部分保留，大文件不再从头重来。</p></div>
+      <div class="feature"><div class="ic">🔒</div><h3>纯本地</h3><p>借用你当前浏览器登录态取流，全程本地，不上传任何数据。</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <h2>怎么安装</h2>
+    <p class="lead">这是开发者模式加载的自用扩展，不在 Chrome 商店上架。三步搞定：</p>
+    <div class="steps">
+      <div class="step"><div><h3>下载并解压</h3><p>点上方按钮下载 zip，解压得到 <code>bilibili-downloader</code> 文件夹，放到一个固定位置（别放临时目录）。</p></div></div>
+      <div class="step"><div><h3>打开扩展页</h3><p>地址栏输入 <code>chrome://extensions/</code>，打开右上角的「开发者模式」。</p></div></div>
+      <div class="step"><div><h3>加载文件夹</h3><p>点「加载已解压的扩展程序」，选中刚才那个 <code>bilibili-downloader</code> 文件夹即可。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>怎么用</h2>
+    <p class="lead">打开任意 B 站视频页（含番剧、「稍后再看 / 收藏夹」播放页），点工具栏里的扩展图标。</p>
+    <div class="steps">
+      <div class="step"><div><h3>选一个分辨率</h3><p>插件默认把<b>兼容性最好的 H.264</b> 放在最上面——MacBook 自带的播放器（QuickTime、访达预览）基本只认 H.264，选它下完双击就能播。想要更小体积，可以展开选 H.265 / AV1（但需要 IINA / VLC 这类支持的播放器）。</p></div></div>
+      <div class="step"><div><h3>顺手下字幕（可选）</h3><p>如果视频带字幕，分辨率列表下方会出现「字幕」区块，列出所有语言，点一下即可导出 SRT——<b>人工字幕和 AI 自动生成字幕都能下</b>。</p></div></div>
+      <div class="step"><div><h3>等它自己跑</h3><p>自动下视频、下音频、合并成 mp4，进度实时显示。过程里可以关掉弹窗。</p></div></div>
+      <div class="step"><div><h3>去 Downloads 拿文件</h3><p>成品 mp4 直接保存到浏览器默认下载目录，双击即可播放。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <h2>常见问题</h2>
+    <div class="notes" style="margin-top:24px">
+      <details><summary>能下到什么清晰度？</summary><p>取决于你浏览器当前的登录态：未登录一般到 480P，登录到 720P，大会员可到 1080P+ / 4K / HDR / 杜比（需账号有权限）。扩展借用你的 cookie，你能看什么就能下什么。</p></details>
+      <details><summary>字幕怎么下？AI 字幕也能下吗？</summary><p>如果视频带字幕，分辨率列表下方会自动出现「字幕」区块，列出所有语言，点一下就导出成标准 SRT。人工上传的字幕和 B 站 AI 自动生成的字幕都支持（AI 的会有标记）。没有字幕的视频不显示这个区块。字幕接口需要登录才能读取。</p></details>
+      <details><summary>为什么有的视频没有 AV1？</summary><p>AV1 转码成本高，B 站只对热门/较新的视频转 AV1，长尾和老视频往往只有 H.264 + H.265。这和扩展、和你的账号都无关，是服务器端有没有这条流。</p></details>
+      <details><summary>付费影视 / 有 DRM 的能下吗？</summary><p>付费内容需要对应会员账号才能拿到高清流；带 DRM 加密的少数独家内容拿不到明文，无解。DRM（数字版权管理）是平台给视频加的一层加密锁，只在受保护的播放环境里临时解密，普通抓流拿到的是密文，还原不成能用的文件。</p></details>
+      <details><summary>大文件下到一半刷新页面会怎样？</summary><p>会中断下载。断点续传是「会话内」的——已下的块存在内存里，刷新页面或关掉整个浏览器都会清空，需要从头下。但只关掉扩展的弹窗是安全的，不影响正在进行的任务。</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  个人项目 · 开源自用 · 不收集任何数据<br>
+  Made by Happy
+</footer>
+
+<div id="modal" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <h3>使用前请确认</h3>
+    <p><b>仅供个人学习使用。</b>请勿用于任何未经授权的下载、传播或商业用途，下载内容的版权归原作者与平台所有。使用本工具产生的一切后果由使用者自行承担。</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modal-cancel">取消</button>
+      <button class="cta" id="modal-agree">同意并下载</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var modal = document.getElementById('modal');
+    document.getElementById('dl-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      modal.hidden = false;
+    });
+    document.getElementById('modal-cancel').addEventListener('click', function () {
+      modal.hidden = true;
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.hidden = true;
+    });
+    document.getElementById('modal-agree').addEventListener('click', function () {
+      modal.hidden = true;
+      var a = document.createElement('a');
+      a.href = 'bilibili-downloader.zip';
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+  })();
+</script>
+
+</body>
+</html>

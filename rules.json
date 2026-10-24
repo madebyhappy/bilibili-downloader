@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {"header": "referer", "operation": "set", "value": "https://www.bilibili.com/"},
+        {"header": "origin", "operation": "set", "value": "https://www.bilibili.com"}
+      ]
+    },
+    "condition": {
+      "requestDomains": ["bilivideo.com", "bilivideo.cn", "akamaized.net", "hdslb.com"],
+      "resourceTypes": ["xmlhttprequest", "media", "other", "sub_frame"]
+    }
+  }
+]

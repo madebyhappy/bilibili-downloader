@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <div id="status">正在读取页面…</div>
+    <div id="title"></div>
+
+    <div id="progress" hidden>
+      <div id="progress-label"></div>
+      <div id="progress-message"></div>
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+      <button id="cancel-btn">取消下载</button>
+    </div>
+
+    <div id="accel-row">
+      <div class="accel-text">
+        <span class="accel-title">加速下载</span>
+        <span class="accel-hint" id="accel-hint">多线程并行，更快</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="accel-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="qualities"></div>
+
+    <div id="audio-hint"></div>
+
+    <div id="subtitles"></div>
+
+    <div id="hint">
+      点一下下面的分辨率，插件会自动下视频+音频，在浏览器里合并成单个 mp4 后保存到 Downloads。
+      合并途中可以关掉这个弹窗，不会中断。
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
